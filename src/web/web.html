@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="./wx-jssdk.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+  <div>
+    sessiontoken: <span id="sessiontoken"></span>
+  </div>
+  <br/>
+  <div>
+    appid: <span id="appid"></span>
+  </div>
+  <br/>
+  <div>
+    platform: <span id="platform"></span>
+  </div>
+  <br/>
+  <div>
+    userid: <span id="userid"></span>
+  </div>
+  <br/>
+  <div>
+    env: <span id="taroenv"></span>
+  </div>
+  <br/>
+
+  <div style="margin-top: 20px;">
+    <div id='userInfo'></div>
+    <button type="button" onclick="getUserInfo()">点击获取用户信息</button>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <button type="button" onclick="jumpToUser()">点击跳转到个人中心</button>
+  </div>
+
+  <script>
+    // 工具函数, 获取地址栏参数
+    function getQueryString(name) {
+        name = name.toLowerCase();
+        var search = window.location.search.toLowerCase();
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", 'i');
+        var result = search.substr(1).match(reg);
+        if (result != null) {
+            return unescape(result[2]);
+        }
+        return null;
+    }
+
+  </script>
+  <script>
+    function setupAjaxHeaders() {
+      var pageParams = getPageParams()
+      var appid = pageParams.appid
+      var sessiontoken = pageParams.sessiontoken
+      var userid = pageParams.userid
+      $.ajaxSetup({
+        headers: {
+          'X-ML-AppId': appid,
+          'X-Project': 'mapp',
+          'X-Runtime': 'webview',
+          'X-ML-Session-Token': sessiontoken
+        }
+      })
+    }
+
+    function getPageParams() {
+      var pageParams = JSON.parse(getQueryString("page_params"))
+      if (!pageParams) {
+        return {}
+      }
+      return pageParams
+    }
+
+    function setPageParamsToHtml() {
+      var pageParams = getPageParams()
+      for (var key in pageParams) {
+        if (pageParams.hasOwnProperty(key)) {
+          var value = pageParams[key];
+          var dom = document.getElementById(key)
+          if (dom) {
+            dom.innerText = value || 'empty'
+          }
+        }
+      }
+    }
+
+    function setWebviewConfig() {
+      wx.miniProgram.postMessage({ 
+        data: { 
+          share: { 
+            title: '分享标题', 
+            imageUrl: '分享图片 url'
+          } 
+        } 
+      })
+    }
+
+    function getUserInfo() {
+      var pageParams = getPageParams()
+      var appid = pageParams.appid
+      var sessiontoken = pageParams.sessiontoken
+      var userid = pageParams.userid
+      
+      if (!sessiontoken) {
+        alert('还未登录，跳转至个人中心登录')
+        jumpToUser()
+        return
+      }
+      $.ajax({
+        url: '/1.0/mems/' + userid,
+      }).then(function(res) {
+        var userInfo = $('#userInfo')
+        var needShowKey = ['nickName', 'phone', 'integral', 'balance']
+        var keyTextMap = {
+          nickName: '昵称',
+          phone: '手机号',
+          integral: '积分',
+          balance: '余额'
+        }
+        for (var i = 0; i < needShowKey.length; i++) {
+          var key = needShowKey[i];
+          userInfo.append('<div>' + keyTextMap[key] + '：' + res[key] + '</div>')
+        }
+      })
+    }
+
+    function jumpToUser() {
+      wx.miniProgram.switchTab({
+        url: '/main/portal/user/index/page'
+      })
+    }
+  </script>
+  <script>
+    window.onload = function() {
+      setupAjaxHeaders()
+      setWebviewConfig()
+      setPageParamsToHtml()
+    }
+  </script>
+</body>
+</html>
