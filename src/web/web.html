@@ -4,8 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
-  <script src="./wx-jssdk.js"></script>
+  <script src="https://res.wx.qq.com/open/js/jweixin-1.3.2.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <style>
+    button{
+      height: 40px;
+      background-color: cadetblue;
+      color: #fff;
+      border-radius: 5px
+    }
+  </style>
 </head>
 <body>
   <div>
@@ -36,6 +44,12 @@
 
   <div style="margin-top: 20px;">
     <button type="button" onclick="jumpToUser()">点击跳转到个人中心</button>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <div><label>设置分享标题：<input type="text" placeholder="输入分享标题" id="shareTitleInput"></label></div>
+    <div><label>设置分享图片：<input type="text" placeholder="输入分享图片" id="shareImageInput"></label></div>
+    <div><button type="button" onclick="setShareConfig()">设置分享配置</button></div>
   </div>
 
   <script>
@@ -89,14 +103,18 @@
       }
     }
 
-    function setWebviewConfig() {
+    function setWebviewShareConfig(config) {
+      var title = config.title
+      var imageUrl = config.imageUrl
       wx.miniProgram.postMessage({ 
         data: { 
           share: { 
-            title: '分享标题', 
-            imageUrl: '分享图片 url'
+            title: title, 
+            imageUrl: imageUrl,
+            // HINT: timestamp 必填. 不然只会获取第一次的设置的配置
+            timestamp: new Date().getTime()
           } 
-        } 
+        }
       })
     }
 
@@ -122,10 +140,12 @@
           integral: '积分',
           balance: '余额'
         }
+        var viewHtml = ''
         for (var i = 0; i < needShowKey.length; i++) {
           var key = needShowKey[i];
-          userInfo.append('<div>' + keyTextMap[key] + '：' + res[key] + '</div>')
+          viewHtml += ('<div>' + keyTextMap[key] + '：' + res[key] + '</div>')
         }
+        userInfo.html(viewHtml)
       })
     }
 
@@ -134,11 +154,20 @@
         url: '/main/portal/user/index/page'
       })
     }
+
+    function setShareConfig() {
+      var titleVal = $('#shareTitleInput').val()
+      var imageVal = $('#shareImageInput').val()
+      setWebviewShareConfig({
+        title: titleVal,
+        imageUrl: imageVal
+      })
+      alert('设置成功')
+    }
   </script>
   <script>
     window.onload = function() {
       setupAjaxHeaders()
-      setWebviewConfig()
       setPageParamsToHtml()
     }
   </script>
