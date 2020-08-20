@@ -83,11 +83,16 @@
     }
 
     function getPageParams() {
-      var pageParams = JSON.parse(getQueryString("page_params"))
-      if (!pageParams) {
+      var pageParamsStr = getQueryString("page_params")
+      if (!pageParamsStr) {
         return {}
       }
-      return pageParams
+      try {
+        var pageParams = JSON.parse(pageParamsStr)
+        return pageParams
+      } catch (err) {
+        return {}
+      }
     }
 
     function setPageParamsToHtml() {
